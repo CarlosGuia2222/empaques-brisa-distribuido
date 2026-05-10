@@ -32,3 +32,18 @@ body {
 .app-container p {
   font-size: 18px;
 }
+.page-container {
+  min-height: 100vh;
+  padding: 40px;
+  background-color: #f4f6f8;
+}
+
+.page-container h1 {
+  color: #1f3c2e;
+  margin-bottom: 10px;
+}
+
+.page-container p {
+  font-size: 18px;
+  color: #333;
+}
