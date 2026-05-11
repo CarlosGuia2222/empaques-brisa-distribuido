@@ -1,0 +1,18 @@
+{
+  "name": "empaques-brisa-distribuido",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema distribuido de cotizaciones para Empaques Brisa",
+  "scripts": {
+    "install:all": "npm install && cd frontend && npm install && cd ../middleware && npm install && cd ../nodos && npm install",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:middleware": "cd middleware && npm run dev",
+    "dev:nodo1": "cd nodos && npm run nodo1",
+    "dev:nodo2": "cd nodos && npm run nodo2",
+    "dev:nodo3": "cd nodos && npm run nodo3",
+    "dev:all": "concurrently \"npm run dev:frontend\" \"npm run dev:middleware\" \"npm run dev:nodo1\" \"npm run dev:nodo2\" \"npm run dev:nodo3\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

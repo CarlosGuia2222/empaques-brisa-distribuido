@@ -1,22 +1,15 @@
 {
-  "name": "nodos",
+  "name": "nodos-empaques-brisa",
   "version": "1.0.0",
-  "description": "Nodos procesadores del sistema distribuido de cotizaciones",
-  "main": "nodo1.js",
+  "description": "Nodos procesadores de cotizaciones para Empaques Brisa",
+  "main": "nodo.js",
   "scripts": {
-    "nodo1": "nodemon nodo1.js",
-    "nodo2": "nodemon nodo2.js",
-    "nodo3": "nodemon nodo3.js"
+    "nodo1": "node nodo.js nodo1 4001 \"Nodo Procesador 1\"",
+    "nodo2": "node nodo.js nodo2 4002 \"Nodo Procesador 2\"",
+    "nodo3": "node nodo.js nodo3 4003 \"Nodo Procesador 3\""
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "cors": "^2.8.6",
-    "express": "^5.2.1"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.14"
+    "cors": "^2.8.5",
+    "express": "^5.1.0"
   }
 }

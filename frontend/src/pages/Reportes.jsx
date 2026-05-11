@@ -1,10 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { obtenerTodasLasCotizaciones } from '../services/cotizacionesService'
-import { obtenerClientes } from '../services/clientesService'
 
 function Reportes() {
   const [cotizaciones, setCotizaciones] = useState([])
-  const [clientes, setClientes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -13,14 +11,11 @@ function Reportes() {
     setError('')
 
     try {
-      const datosCotizaciones = await obtenerTodasLasCotizaciones()
-      const datosClientes = await obtenerClientes()
-
-      setCotizaciones(datosCotizaciones)
-      setClientes(datosClientes)
+      const datos = await obtenerTodasLasCotizaciones()
+      setCotizaciones(datos)
     } catch (error) {
       console.error('Error al cargar reportes:', error)
-      setError('No se pudieron cargar los reportes.')
+      setError('No se pudieron cargar los reportes desde Firestore.')
     } finally {
       setLoading(false)
     }
@@ -30,173 +25,88 @@ function Reportes() {
     cargarReportes()
   }, [])
 
-  const totalCotizaciones = cotizaciones.length
+  const reportes = useMemo(() => {
+    const totalCotizado = cotizaciones.reduce((total, item) => total + Number(item.precioEstimado || 0), 0)
+    const totalPiezas = cotizaciones.reduce((total, item) => total + Number(item.cantidad || 0), 0)
 
-  const totalCotizado = cotizaciones.reduce((total, cotizacion) => {
-    return total + Number(cotizacion.precioEstimado || 0)
-  }, 0)
+    const porMaterial = Object.values(cotizaciones.reduce((acc, item) => {
+      const llave = item.materialNombre || 'Sin material'
+      acc[llave] ||= { nombre: llave, cantidad: 0, total: 0 }
+      acc[llave].cantidad += 1
+      acc[llave].total += Number(item.precioEstimado || 0)
+      return acc
+    }, {})).sort((a, b) => b.total - a.total)
 
-  const totalClientes = clientes.length
+    const porNodo = Object.values(cotizaciones.reduce((acc, item) => {
+      const llave = item.nodoUsado || 'Sin nodo registrado'
+      acc[llave] ||= { nombre: llave, cantidad: 0, total: 0 }
+      acc[llave].cantidad += 1
+      acc[llave].total += Number(item.precioEstimado || 0)
+      return acc
+    }, {})).sort((a, b) => b.cantidad - a.cantidad)
 
-  const obtenerCotizacionesPorEmpleado = () => {
-    const resumen = {}
-
-    cotizaciones.forEach((cotizacion) => {
-      const empleado = cotizacion.creadoPorEmail || 'Sin empleado'
-
-      if (!resumen[empleado]) {
-        resumen[empleado] = 0
-      }
-
-      resumen[empleado] += 1
-    })
-
-    return Object.entries(resumen).map(([empleado, total]) => ({
-      empleado,
-      total,
-    }))
-  }
-
-  const obtenerMaterialMasUsado = () => {
-    const resumen = {}
-
-    cotizaciones.forEach((cotizacion) => {
-      const material = cotizacion.materialNombre || 'Sin material'
-
-      if (!resumen[material]) {
-        resumen[material] = 0
-      }
-
-      resumen[material] += 1
-    })
-
-    const materialesOrdenados = Object.entries(resumen).sort(
-      (a, b) => b[1] - a[1]
-    )
-
-    if (materialesOrdenados.length === 0) {
-      return 'Sin datos'
-    }
-
-    return `${materialesOrdenados[0][0]} (${materialesOrdenados[0][1]} cotizaciones)`
-  }
-
-  const cotizacionesPorEmpleado = obtenerCotizacionesPorEmpleado()
-  const materialMasUsado = obtenerMaterialMasUsado()
-
-  if (loading) {
-    return (
-      <div className="page-container">
-        <h1>Cargando reportes...</h1>
-        <p>Espere un momento.</p>
-      </div>
-    )
-  }
+    return { totalCotizado, totalPiezas, porMaterial, porNodo }
+  }, [cotizaciones])
 
   return (
     <div className="page-container">
-      <div className="reportes-container">
-        <div className="reportes-header">
-          <div>
-            <h1>Reportes Administrativos</h1>
-            <p>
-              Consulta métricas generales sobre cotizaciones, clientes y
-              actividad de empleados.
-            </p>
-          </div>
-
-          <button onClick={cargarReportes}>Actualizar</button>
+      <section className="page-hero split-hero">
+        <div>
+          <span className="eyebrow">Reportes administrativos</span>
+          <h1>Reportes</h1>
+          <p>Resumen operativo de cotizaciones, materiales y nodos procesadores utilizados.</p>
         </div>
+        <button className="primary-action" onClick={cargarReportes} disabled={loading}>
+          {loading ? 'Cargando...' : 'Actualizar'}
+        </button>
+      </section>
 
-        {error && <div className="error-message">{error}</div>}
+      {error && <div className="error-message wide-message">{error}</div>}
 
-        {!error && (
-          <>
-            <div className="reportes-grid">
-              <div className="reporte-card">
-                <span>Total de cotizaciones</span>
-                <strong>{totalCotizaciones}</strong>
-              </div>
+      <div className="status-strip">
+        <div className="metric-card"><span>Total cotizado</span><strong>${reportes.totalCotizado.toFixed(2)}</strong></div>
+        <div className="metric-card"><span>Cotizaciones</span><strong>{cotizaciones.length}</strong></div>
+        <div className="metric-card"><span>Piezas solicitadas</span><strong>{reportes.totalPiezas}</strong></div>
+      </div>
 
-              <div className="reporte-card">
-                <span>Total cotizado</span>
-                <strong>${totalCotizado.toFixed(2)}</strong>
-              </div>
-
-              <div className="reporte-card">
-                <span>Clientes registrados</span>
-                <strong>{totalClientes}</strong>
-              </div>
-
-              <div className="reporte-card">
-                <span>Material más usado</span>
-                <strong>{materialMasUsado}</strong>
-              </div>
-            </div>
-
-            <div className="reportes-section">
-              <h2>Cotizaciones por empleado</h2>
-
-              {cotizacionesPorEmpleado.length === 0 ? (
-                <p>No hay cotizaciones registradas.</p>
-              ) : (
-                <div className="tabla-reportes">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Empleado</th>
-                        <th>Total de cotizaciones</th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      {cotizacionesPorEmpleado.map((item) => (
-                        <tr key={item.empleado}>
-                          <td>{item.empleado}</td>
-                          <td>{item.total}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+      <div className="reports-grid">
+        <section className="panel">
+          <div className="section-title-row">
+            <h2>Ventas por material</h2>
+            <span>{reportes.porMaterial.length} materiales</span>
+          </div>
+          {reportes.porMaterial.length === 0 && <p>No hay datos suficientes.</p>}
+          <div className="ranking-list">
+            {reportes.porMaterial.map((item) => (
+              <div className="ranking-item" key={item.nombre}>
+                <div>
+                  <strong>{item.nombre}</strong>
+                  <span>{item.cantidad} cotizaciones</span>
                 </div>
-              )}
-            </div>
+                <b>${item.total.toFixed(2)}</b>
+              </div>
+            ))}
+          </div>
+        </section>
 
-            <div className="reportes-section">
-              <h2>Últimas cotizaciones</h2>
-
-              {cotizaciones.length === 0 ? (
-                <p>No hay cotizaciones registradas.</p>
-              ) : (
-                <div className="tabla-reportes">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Cliente</th>
-                        <th>Empleado</th>
-                        <th>Material</th>
-                        <th>Cantidad</th>
-                        <th>Precio</th>
-                      </tr>
-                    </thead>
-
-                    <tbody>
-                      {cotizaciones.slice(0, 5).map((cotizacion) => (
-                        <tr key={cotizacion.id}>
-                          <td>{cotizacion.cliente}</td>
-                          <td>{cotizacion.creadoPorEmail}</td>
-                          <td>{cotizacion.materialNombre}</td>
-                          <td>{cotizacion.cantidad}</td>
-                          <td>${cotizacion.precioEstimado}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+        <section className="panel">
+          <div className="section-title-row">
+            <h2>Trabajo por nodo</h2>
+            <span>Procesamiento distribuido</span>
+          </div>
+          {reportes.porNodo.length === 0 && <p>No hay datos suficientes.</p>}
+          <div className="ranking-list">
+            {reportes.porNodo.map((item) => (
+              <div className="ranking-item" key={item.nombre}>
+                <div>
+                  <strong>{item.nombre}</strong>
+                  <span>{item.cantidad} solicitudes guardadas</span>
                 </div>
-              )}
-            </div>
-          </>
-        )}
+                <b>${item.total.toFixed(2)}</b>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   )

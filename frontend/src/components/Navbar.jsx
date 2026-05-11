@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from '../firebase/firebaseConfig'
 import { logoutUser } from '../services/authService'
 import { getUserData } from '../services/usersService'
+import BrisaLogo from './BrisaLogo'
 
 function Navbar() {
   const navigate = useNavigate()
@@ -42,43 +43,38 @@ function Navbar() {
     }
   }
 
-  if (loading) {
-    return null
-  }
+  if (loading || !userData) return null
 
-  if (!userData) {
-    return null
-  }
+  const linkClass = ({ isActive }) => (isActive ? 'nav-link is-active' : 'nav-link')
 
   return (
     <nav className="navbar">
-      <div className="navbar-logo">
-        Empaques Brisa
-      </div>
+      <NavLink className="navbar-brand" to={userData.role === 'admin' ? '/admin' : '/empleado'}>
+        <BrisaLogo />
+      </NavLink>
 
       <div className="navbar-links">
         {userData.role === 'empleado' && (
           <>
-            <Link to="/empleado">Inicio</Link>
-            <Link to="/nueva-cotizacion">Nueva Cotización</Link>
-            <Link to="/historial">Historial</Link>
-            <Link to="/clientes">Clientes</Link>
+            <NavLink className={linkClass} to="/empleado">Inicio</NavLink>
+            <NavLink className={linkClass} to="/nueva-cotizacion">Nueva Cotización</NavLink>
+            <NavLink className={linkClass} to="/historial">Historial</NavLink>
+            <NavLink className={linkClass} to="/clientes">Clientes</NavLink>
           </>
         )}
 
         {userData.role === 'admin' && (
           <>
-            <Link to="/admin">Inicio Admin</Link>
-            <Link to="/historial">Historial</Link>
-            <Link to="/clientes">Clientes</Link>
-            <Link to="/reportes">Reportes</Link>
-            <Link to="/monitoreo">Monitoreo</Link>
+            <NavLink className={linkClass} to="/admin">Inicio Admin</NavLink>
+            <NavLink className={linkClass} to="/historial">Historial</NavLink>
+            <NavLink className={linkClass} to="/clientes">Clientes</NavLink>
+            <NavLink className={linkClass} to="/reportes">Reportes</NavLink>
+            <NavLink className={linkClass} to="/monitoreo">Monitoreo</NavLink>
           </>
         )}
 
-        <button className="navbar-logout" onClick={handleLogout}>
-          Cerrar sesión
-        </button>
+        <span className="navbar-user">{userData.role}</span>
+        <button className="navbar-logout" onClick={handleLogout}>Cerrar sesión</button>
       </div>
     </nav>
   )

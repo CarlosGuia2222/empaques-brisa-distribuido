@@ -1,144 +1,105 @@
 import { useEffect, useState } from 'react'
-import { obtenerNodos } from '../services/nodosService'
+import NodoCard from '../components/NodoCard'
+import { obtenerEstadoNodos, verificarMiddleware } from '../services/middlewareService'
 
 function MonitoreoNodos() {
-  const [nodos, setNodos] = useState([])
+  const [datos, setDatos] = useState(null)
+  const [middleware, setMiddleware] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const cargarNodos = async () => {
+  const cargarEstado = async () => {
     setLoading(true)
     setError('')
 
     try {
-      const datos = await obtenerNodos()
-      setNodos(datos)
+      const [estadoMiddleware, estadoNodos] = await Promise.all([
+        verificarMiddleware(),
+        obtenerEstadoNodos(),
+      ])
+
+      setMiddleware(estadoMiddleware)
+      setDatos(estadoNodos)
     } catch (error) {
-      console.error('Error al cargar nodos:', error)
-      setError('No se pudo cargar el monitoreo de nodos.')
+      console.error('Error al cargar monitoreo:', error)
+      setError('No se pudo conectar con el middleware. Verifica que esté corriendo en el puerto 4000.')
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    cargarNodos()
+    cargarEstado()
   }, [])
 
-  const nodosActivos = nodos.filter((nodo) => nodo.activo).length
-  const nodosInactivos = nodos.filter((nodo) => !nodo.activo).length
-
-  const totalSolicitudes = nodos.reduce((total, nodo) => {
-    return total + Number(nodo.solicitudesProcesadas || 0)
-  }, 0)
-
-  const cargaTotal = nodos.reduce((total, nodo) => {
-    return total + Number(nodo.cargaActual || 0)
-  }, 0)
-
-  if (loading) {
-    return (
-      <div className="page-container">
-        <h1>Cargando monitoreo...</h1>
-        <p>Espere un momento.</p>
-      </div>
-    )
+  const resumen = datos?.resumen || {
+    activos: 0,
+    inactivos: 0,
+    solicitudesProcesadas: 0,
+    cargaActualTotal: 0,
+    errores: 0,
   }
 
   return (
     <div className="page-container">
-      <div className="monitoreo-container">
-        <div className="monitoreo-header">
-          <div>
-            <h1>Monitoreo de Nodos</h1>
-            <p>
-              Consulta el estado de los nodos procesadores del sistema distribuido.
-            </p>
+      <section className="page-hero split-hero">
+        <div>
+          <span className="eyebrow">Sistema distribuido</span>
+          <h1>Monitoreo de Nodos</h1>
+          <p>Consulta en tiempo real el estado del middleware, los nodos procesadores y la carga del sistema.</p>
+        </div>
+        <button className="primary-action" onClick={cargarEstado} disabled={loading}>
+          {loading ? 'Actualizando...' : 'Actualizar'}
+        </button>
+      </section>
+
+      {error && <div className="error-message wide-message">{error}</div>}
+
+      {!error && (
+        <>
+          <div className="status-strip">
+            <div className="metric-card">
+              <span>Nodos activos</span>
+              <strong>{resumen.activos}</strong>
+            </div>
+            <div className="metric-card">
+              <span>Nodos inactivos</span>
+              <strong>{resumen.inactivos}</strong>
+            </div>
+            <div className="metric-card">
+              <span>Solicitudes procesadas</span>
+              <strong>{resumen.solicitudesProcesadas}</strong>
+            </div>
+            <div className="metric-card">
+              <span>Carga total</span>
+              <strong>{resumen.cargaActualTotal}</strong>
+            </div>
+            <div className="metric-card">
+              <span>Errores</span>
+              <strong>{resumen.errores}</strong>
+            </div>
           </div>
 
-          <button onClick={cargarNodos}>Actualizar</button>
-        </div>
-
-        {error && <div className="error-message">{error}</div>}
-
-        {!error && (
-          <>
-            <div className="monitoreo-resumen">
-              <div className="monitoreo-card">
-                <span>Nodos activos</span>
-                <strong>{nodosActivos}</strong>
-              </div>
-
-              <div className="monitoreo-card">
-                <span>Nodos inactivos</span>
-                <strong>{nodosInactivos}</strong>
-              </div>
-
-              <div className="monitoreo-card">
-                <span>Solicitudes procesadas</span>
-                <strong>{totalSolicitudes}</strong>
-              </div>
-
-              <div className="monitoreo-card">
-                <span>Carga actual total</span>
-                <strong>{cargaTotal}</strong>
-              </div>
+          <div className="middleware-card panel">
+            <div>
+              <span className="eyebrow">Middleware</span>
+              <h2>{middleware?.servicio || 'middleware'}</h2>
+              <p>Puerto {middleware?.puerto || 4000} · Estrategia Round Robin con failover</p>
             </div>
+            <span className="status-pill success">Operativo</span>
+          </div>
 
-            {nodos.length === 0 ? (
-              <div className="empty-state">
-                <h2>No hay nodos registrados</h2>
-                <p>Agrega nodos en Firestore para visualizarlos aquí.</p>
-              </div>
-            ) : (
-              <div className="nodos-grid">
-                {nodos.map((nodo) => (
-                  <div className="nodo-card" key={nodo.id}>
-                    <div className="nodo-card-header">
-                      <div>
-                        <h2>{nodo.nombre}</h2>
-                        <p>{nodo.url}</p>
-                      </div>
+          <div className="nodes-grid">
+            {(datos?.nodos || []).map((nodo) => (
+              <NodoCard key={nodo.id} nodo={nodo} />
+            ))}
+          </div>
 
-                      <span
-                        className={
-                          nodo.activo
-                            ? 'nodo-estado activo'
-                            : 'nodo-estado inactivo'
-                        }
-                      >
-                        {nodo.activo ? 'Activo' : 'Inactivo'}
-                      </span>
-                    </div>
-
-                    <div className="nodo-info">
-                      <p>
-                        <strong>ID del nodo:</strong> {nodo.id}
-                      </p>
-                      <p>
-                        <strong>Solicitudes procesadas:</strong>{' '}
-                        {nodo.solicitudesProcesadas}
-                      </p>
-                      <p>
-                        <strong>Carga actual:</strong> {nodo.cargaActual}
-                      </p>
-                    </div>
-
-                    <div className="nodo-barra">
-                      <div
-                        className="nodo-barra-fill"
-                        style={{
-                          width: `${Math.min(Number(nodo.cargaActual || 0) * 25, 100)}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
-        )}
-      </div>
+          {datos?.fechaActualizacion && (
+            <p className="last-update">Última actualización: {new Date(datos.fechaActualizacion).toLocaleString('es-MX')}</p>
+          )}
+        </>
+      )}
     </div>
   )
 }
