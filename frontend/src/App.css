@@ -78,3 +78,17 @@ body {
 .navbar-links a:hover {
   text-decoration: underline;
 }
+.navbar-logout {
+  background-color: #ffffff;
+  color: #1f3c2e;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.navbar-logout:hover {
+  background-color: #e5e5e5;
+}

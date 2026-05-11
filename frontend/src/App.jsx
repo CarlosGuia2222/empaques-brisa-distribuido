@@ -1,5 +1,8 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import './App.css'
+
+import Navbar from './components/Navbar'
+import ProtectedRoute from './components/ProtectedRoute'
 
 import Login from './pages/Login'
 import RoleRouter from './pages/RoleRouter'
@@ -11,26 +14,83 @@ import Clientes from './pages/Clientes'
 import MonitoreoNodos from './pages/MonitoreoNodos'
 import Reportes from './pages/Reportes'
 
-import Navbar from './components/Navbar'
-
 function App() {
+  const location = useLocation()
+
+  const ocultarNavbar = location.pathname === '/login'
+
   return (
     <>
-      <Navbar />
+      {!ocultarNavbar && <Navbar />}
 
       <Routes>
         <Route path="/" element={<Navigate to="/login" />} />
+
         <Route path="/login" element={<Login />} />
         <Route path="/role-router" element={<RoleRouter />} />
 
-        <Route path="/empleado" element={<InicioEmpleado />} />
-        <Route path="/admin" element={<InicioAdmin />} />
+        <Route
+          path="/empleado"
+          element={
+            <ProtectedRoute allowedRoles={['empleado']}>
+              <InicioEmpleado />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/nueva-cotizacion" element={<NuevaCotizacion />} />
-        <Route path="/historial" element={<Historial />} />
-        <Route path="/clientes" element={<Clientes />} />
-        <Route path="/monitoreo" element={<MonitoreoNodos />} />
-        <Route path="/reportes" element={<Reportes />} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <InicioAdmin />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/nueva-cotizacion"
+          element={
+            <ProtectedRoute allowedRoles={['empleado']}>
+              <NuevaCotizacion />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/historial"
+          element={
+            <ProtectedRoute allowedRoles={['empleado', 'admin']}>
+              <Historial />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/clientes"
+          element={
+            <ProtectedRoute allowedRoles={['empleado', 'admin']}>
+              <Clientes />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/monitoreo"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <MonitoreoNodos />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/reportes"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <Reportes />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </>
   )

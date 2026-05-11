@@ -1,6 +1,18 @@
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { logoutUser } from '../services/authService'
 
 function Navbar() {
+  const navigate = useNavigate()
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser()
+      navigate('/login')
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error)
+    }
+  }
+
   return (
     <nav className="navbar">
       <div className="navbar-logo">
@@ -16,6 +28,10 @@ function Navbar() {
         <Link to="/clientes">Clientes</Link>
         <Link to="/monitoreo">Monitoreo</Link>
         <Link to="/reportes">Reportes</Link>
+
+        <button className="navbar-logout" onClick={handleLogout}>
+          Cerrar sesión
+        </button>
       </div>
     </nav>
   )
