@@ -638,3 +638,160 @@ body {
     width: 100%;
   }
 }
+.monitoreo-container {
+  width: 100%;
+  max-width: 1150px;
+  margin: 0 auto;
+}
+
+.monitoreo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.monitoreo-header h1 {
+  color: #1f3c2e;
+  margin-bottom: 6px;
+}
+
+.monitoreo-header p {
+  color: #555;
+  margin: 0;
+}
+
+.monitoreo-header button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background-color: #1f3c2e;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.monitoreo-resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.monitoreo-card {
+  background-color: #ffffff;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e4e4e4;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.monitoreo-card span {
+  color: #555;
+  font-weight: bold;
+}
+
+.monitoreo-card strong {
+  color: #1f3c2e;
+  font-size: 30px;
+}
+
+.nodos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+.nodo-card {
+  background-color: #ffffff;
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e4e4e4;
+}
+
+.nodo-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+  border-bottom: 1px solid #e4e4e4;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+}
+
+.nodo-card-header h2 {
+  color: #1f3c2e;
+  margin: 0 0 4px 0;
+  font-size: 21px;
+}
+
+.nodo-card-header p {
+  color: #555;
+  margin: 0;
+  font-size: 14px;
+}
+
+.nodo-estado {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.nodo-estado.activo {
+  background-color: #e4f7e7;
+  color: #216b2f;
+  border: 1px solid #b9dfc1;
+}
+
+.nodo-estado.inactivo {
+  background-color: #ffe1e1;
+  color: #9b1c1c;
+  border: 1px solid #efb4b4;
+}
+
+.nodo-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nodo-info p {
+  margin: 0;
+  color: #333;
+}
+
+.nodo-info strong {
+  color: #1f3c2e;
+}
+
+.nodo-barra {
+  margin-top: 16px;
+  width: 100%;
+  height: 10px;
+  background-color: #e8e8e8;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.nodo-barra-fill {
+  height: 100%;
+  background-color: #1f3c2e;
+  border-radius: 999px;
+}
+
+@media (max-width: 700px) {
+  .monitoreo-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .monitoreo-header button {
+    width: 100%;
+  }
+}
