@@ -245,3 +245,130 @@ body {
     width: 100%;
   }
 }
+.historial-container {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.historial-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.historial-header h1 {
+  color: #1f3c2e;
+  margin-bottom: 6px;
+}
+
+.historial-header p {
+  color: #555;
+  margin: 0;
+}
+
+.historial-header button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background-color: #1f3c2e;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.historial-header button:hover {
+  background-color: #2d573f;
+}
+
+.empty-state {
+  background-color: #ffffff;
+  padding: 34px;
+  border-radius: 14px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.empty-state h2 {
+  color: #1f3c2e;
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  color: #555;
+}
+
+.cotizaciones-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+.cotizacion-card {
+  background-color: #ffffff;
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e4e4e4;
+}
+
+.cotizacion-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  border-bottom: 1px solid #e4e4e4;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+}
+
+.cotizacion-card-header h2 {
+  color: #1f3c2e;
+  margin: 0 0 4px 0;
+  font-size: 21px;
+}
+
+.cotizacion-card-header p {
+  color: #555;
+  margin: 0;
+}
+
+.estado-badge {
+  background-color: #eef6ef;
+  color: #1f3c2e;
+  border: 1px solid #c9dfcc;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+.cotizacion-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cotizacion-info p {
+  color: #333;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.cotizacion-info strong {
+  color: #1f3c2e;
+}
+
+@media (max-width: 700px) {
+  .historial-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .historial-header button {
+    width: 100%;
+  }
+}
