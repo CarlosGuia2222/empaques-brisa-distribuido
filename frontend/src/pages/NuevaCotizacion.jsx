@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { auth } from '../firebase/firebaseConfig'
 import { crearCotizacion } from '../services/cotizacionesService'
+import { solicitarCotizacionAlMiddleware } from '../services/middlewareService'
 import { materiales } from '../data/materiales'
 
 function NuevaCotizacion() {
@@ -16,9 +17,11 @@ function NuevaCotizacion() {
   })
 
   const [precioEstimado, setPrecioEstimado] = useState(null)
+  const [nodoUsado, setNodoUsado] = useState('')
   const [mensaje, setMensaje] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [calculando, setCalculando] = useState(false)
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -29,44 +32,64 @@ function NuevaCotizacion() {
     })
   }
 
-  const calcularPrecio = () => {
+  const validarDatosCotizacion = () => {
     const largo = Number(formData.largo)
     const ancho = Number(formData.ancho)
     const alto = Number(formData.alto)
     const cantidad = Number(formData.cantidad)
 
     if (!largo || !ancho || !alto || !cantidad || !formData.material) {
-      return null
+      return false
     }
 
-    const materialSeleccionado = materiales.find(
-      (material) => material.id === formData.material
-    )
-
-    if (!materialSeleccionado) {
-      return null
-    }
-
-    const volumen = largo * ancho * alto
-    const precioUnitario = (volumen / 1000) * materialSeleccionado.precioBase
-    const subtotal = precioUnitario * cantidad
-    const precioFinal = subtotal < 50 ? 50 : subtotal
-
-    return Number(precioFinal.toFixed(2))
+    return true
   }
 
-  const handleCalcular = () => {
-    setError('')
-    setMensaje('')
-
-    const precio = calcularPrecio()
-
-    if (precio === null) {
-      setError('Completa las medidas, material y cantidad para calcular.')
-      return
+  const calcularConMiddleware = async () => {
+    if (!validarDatosCotizacion()) {
+      throw new Error('Completa las medidas, material y cantidad para calcular.')
     }
 
-    setPrecioEstimado(precio)
+    const respuestaMiddleware = await solicitarCotizacionAlMiddleware({
+      largo: Number(formData.largo),
+      ancho: Number(formData.ancho),
+      alto: Number(formData.alto),
+      material: formData.material,
+      cantidad: Number(formData.cantidad),
+    })
+
+    const precio = respuestaMiddleware.resultado?.precioEstimado
+    const nodo = respuestaMiddleware.nodoUsado
+
+    if (precio === undefined || precio === null) {
+      throw new Error('El middleware no regresó un precio válido.')
+    }
+
+    return {
+      precio,
+      nodo,
+      nodoId: respuestaMiddleware.nodoId,
+      resultado: respuestaMiddleware.resultado,
+    }
+  }
+
+  const handleCalcular = async () => {
+    setError('')
+    setMensaje('')
+    setCalculando(true)
+
+    try {
+      const resultado = await calcularConMiddleware()
+
+      setPrecioEstimado(resultado.precio)
+      setNodoUsado(resultado.nodo)
+      setMensaje(`Precio calculado correctamente por ${resultado.nodo}.`)
+    } catch (error) {
+      console.error('Error al calcular con middleware:', error)
+      setError(error.message)
+    } finally {
+      setCalculando(false)
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -85,13 +108,7 @@ function NuevaCotizacion() {
         return
       }
 
-      const precio = calcularPrecio()
-
-      if (precio === null) {
-        setError('No se pudo calcular el precio. Revisa los datos.')
-        setLoading(false)
-        return
-      }
+      const resultado = await calcularConMiddleware()
 
       const materialSeleccionado = materiales.find(
         (material) => material.id === formData.material
@@ -107,15 +124,18 @@ function NuevaCotizacion() {
         materialNombre: materialSeleccionado.nombre,
         cantidad: Number(formData.cantidad),
         observaciones: formData.observaciones,
-        precioEstimado: precio,
+        precioEstimado: resultado.precio,
+        nodoUsado: resultado.nodo,
+        nodoId: resultado.nodoId,
         creadoPorUid: usuarioActual.uid,
         creadoPorEmail: usuarioActual.email,
       }
 
       await crearCotizacion(nuevaCotizacion)
 
-      setMensaje('Cotización guardada correctamente.')
-      setPrecioEstimado(precio)
+      setPrecioEstimado(resultado.precio)
+      setNodoUsado(resultado.nodo)
+      setMensaje(`Cotización guardada correctamente. Procesada por ${resultado.nodo}.`)
 
       setFormData({
         cliente: '',
@@ -129,7 +149,7 @@ function NuevaCotizacion() {
       })
     } catch (error) {
       console.error('Error al guardar cotización:', error)
-      setError('Ocurrió un error al guardar la cotización.')
+      setError(error.message || 'Ocurrió un error al guardar la cotización.')
     } finally {
       setLoading(false)
     }
@@ -140,8 +160,8 @@ function NuevaCotizacion() {
       <div className="form-container">
         <h1>Nueva Cotización</h1>
         <p>
-          Captura los datos del cliente, las medidas del empaque y el material
-          para generar una cotización.
+          Captura los datos del cliente, las medidas del empaque y el material.
+          El cálculo será enviado al middleware y procesado por un nodo.
         </p>
 
         <form className="cotizacion-form" onSubmit={handleSubmit}>
@@ -251,7 +271,11 @@ function NuevaCotizacion() {
 
           {precioEstimado !== null && (
             <div className="precio-box">
-              <span>Precio estimado:</span>
+              <div>
+                <span>Precio estimado:</span>
+                {nodoUsado && <p className="nodo-usado">Procesado por: {nodoUsado}</p>}
+              </div>
+
               <strong>${precioEstimado}</strong>
             </div>
           )}
@@ -260,8 +284,8 @@ function NuevaCotizacion() {
           {error && <div className="error-message">{error}</div>}
 
           <div className="form-actions">
-            <button type="button" onClick={handleCalcular}>
-              Calcular precio
+            <button type="button" onClick={handleCalcular} disabled={calculando}>
+              {calculando ? 'Calculando...' : 'Calcular con middleware'}
             </button>
 
             <button type="submit" disabled={loading}>

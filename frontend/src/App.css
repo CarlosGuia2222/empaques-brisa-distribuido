@@ -795,3 +795,8 @@ body {
     width: 100%;
   }
 }
+.nodo-usado {
+  margin: 6px 0 0 0;
+  color: #555;
+  font-size: 14px;
+}
